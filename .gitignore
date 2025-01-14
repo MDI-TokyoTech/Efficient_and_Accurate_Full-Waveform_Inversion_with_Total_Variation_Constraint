@@ -1,0 +1,13 @@
+__pycache__
+/tmp
+/data-storage
+/output
+.idea
+.venv
+/thesis/SIP/out/*
+!/thesis/SIP/out/main.pdf
+
+/thesis/IGARSS/out/*
+!/thesis/IGARSS/out/main.pdf
+
+.DS_Store

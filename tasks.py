@@ -1,41 +1,35 @@
-import os
 import subprocess
 from pathlib import Path
+import requests
 
 from invoke import task
 
 project_root_path = Path(__file__).parent.resolve()
-remote_project_root_path = Path('/home/kr/workspace/sandbox-onolab')
 
-
-@task
-def download_output(c):
-    subprocess.run(f'scp -r onolab:~/workspace/sandbox-onolab/output {project_root_path}', shell=True)
-
-# @task
-# def exec_matlab(c, file_name: str, jp_locale: bool = False):
-#     if jp_locale:
-#         subprocess.run(f"""ssh onolab 'cd ~/workspace/sspo-exercise/matlab && exec-matlab-jp {file_name}' && poetry run inv download-output > /dev/null""", shell=True)
-#     else:
-#         subprocess.run(f"""ssh onolab 'cd ~/workspace/sspo-exercise/matlab && exec-matlab {file_name}' && poetry run inv download-output > /dev/null""", shell=True)
 
 
 @task
-def poetry_add(c, name: str, dev: bool = False):
-    dev_flag = '-D' if dev else ''
-    subprocess.run(f"""poetry add {dev_flag} {name}""", shell=True, cwd=project_root_path)
-    sync_venv(c)
+def download_salt_and_overthrust_models(c):
+    # ref: https://wiki.seg.org/wiki/SEG/EAGE_Salt_and_Overthrust_Models
+    url = "https://s3.amazonaws.com/open.source.geoscience/open_data/seg_eage_models_cd/salt_and_overthrust_models.tar.gz"
 
-@task
-def sync_venv(c):
-    subprocess.run(f"""scp -r pyproject.toml poetry.lock onolab:{remote_project_root_path} && ssh onolab 'cd {remote_project_root_path} && poetry install'""", shell=True, cwd=project_root_path)
+    response = requests.get(url, stream=True)
+    response.raise_for_status()
+
+    path = project_root_path.joinpath("datasets/salt_and_overthrust_models.tar.gz")
+
+    with open(temp_path, 'wb') as f:
+        for chunk in response.iter_content(chunk_size=1024):
+            if chunk:
+                f.write(chunk)
+    pass
 
 
 @task
 def format(c):
     format_commands = [
-        f"isort ./src ./lib ./sandbox",
-        f"black ./src ./lib ./sandbox"
+        f"isort ./src ./lib",
+        f"black ./src ./lib"
     ]
 
     for cmd in format_commands:

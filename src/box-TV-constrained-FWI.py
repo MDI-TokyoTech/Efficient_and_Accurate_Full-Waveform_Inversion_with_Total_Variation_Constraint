@@ -103,7 +103,7 @@ def fwi_params_to_fast_parallel_velocity_model_gradient_calculator_props(
 def load_salt_model(real_cell_size: Vec2D[int], target_idx: int = 300):
     vmin, vmax = 1.5, 4.5
 
-    seismic_data_path = datasets_root_path.joinpath("salt-and-overthrust-models/3-D_Salt_Model/VEL_GRIDS/Saltf@@")
+    seismic_data_path = datasets_root_path.joinpath("salt_and_overthrust_models/3-D_Salt_Model/VEL_GRIDS/Saltf@@")
     seismic_data = load_seismic_datasets__salt_model(seismic_data_path).transpose((1, 0, 2)).astype(np.float32) / 1000.0
     assert vmin <= np.min(seismic_data) and np.max(seismic_data) <= vmax
 
@@ -117,7 +117,7 @@ def load_salt_model(real_cell_size: Vec2D[int], target_idx: int = 300):
 def load_overthrust_model(real_cell_size: Vec2D[int], target_idx: int = 300):
     vmin, vmax = 2.1, 6.0
 
-    seismic_data_path = datasets_root_path.joinpath("salt-and-overthrust-models/3-D_Overthrust_Model_Disk1/3D-Velocity-Grid/overthrust.vites")
+    seismic_data_path = datasets_root_path.joinpath("salt_and_overthrust_models/3-D_Overthrust_Model_Disk1/3D-Velocity-Grid/overthrust.vites")
     seismic_data = load_seismic_datasets__overthrust_model(seismic_data_path).transpose((1, 0, 2)).astype(np.float32) / 1000.0
     assert vmin <= np.min(seismic_data) and np.max(seismic_data) <= vmax
 

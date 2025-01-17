@@ -1,12 +1,11 @@
 from multiprocessing import Process, Queue
 from multiprocessing.shared_memory import SharedMemory
-from typing import List, NamedTuple, Tuple
+from typing import NamedTuple, Tuple
 
 import numpy as np
 import numpy.typing as npt
 from devito import Eq, Function, Inc, Operator, TimeFunction, norm, solve
 from numpy.typing import NDArray
-from scipy.ndimage import gaussian_filter
 
 from lib.seismic.devito_example import AcquisitionGeometry, Receiver, SeismicModel
 from lib.seismic.devito_example.acoustic import AcousticWaveSolver
@@ -79,7 +78,7 @@ class FastParallelVelocityModelGradientCalculator:
         for p in self.processes:
             p.start()
 
-        # 初期化が終わるまで待つ
+        # wait for initialization
         for _ in range(self.n_jobs):
             self.output_queue.get()
 
@@ -153,11 +152,8 @@ def calc_grad_worker(
 
     grad_calculator = FastParallelVelocityModelGradientCalculatorHelper(props, true_observed_waveforms)
 
-    # velocity_modelの初期化を行う
-    # current_model.vp.dataを用いるのはdamping層込みの値で初期化したいから
     velocity_model[:] = grad_calculator.current_model.vp.data
 
-    # 初期化が終わったことを伝える
     output_queue.put(0)
 
     while True:
@@ -165,10 +161,10 @@ def calc_grad_worker(
         if idx is None:
             break
         if idx < 0:
-            # true observed waveform計算
+            # calculate true observed waveform
             true_observed_waveforms[-idx - 1] = grad_calculator.calc_true_observed_waveform(-idx - 1)
         else:
-            # grad計算
+            # calculate grad
             residual_norm[idx], vm_grad[idx] = grad_calculator.calc_grad(velocity_model, idx)
 
         output_queue.put(0)
@@ -228,21 +224,18 @@ class FastParallelVelocityModelGradientCalculatorHelper:
         residual = Receiver(name="residual", grid=self.current_model.grid, time_range=self.geometry.time_axis, coordinates=self.geometry.rec_positions)
         calculated_waveform = Receiver(name="d_syn", grid=self.true_model.grid, time_range=self.geometry.time_axis, coordinates=self.geometry.rec_positions)
 
-        # 現在のvelocity modelの値をupdate
         self.current_model.vp.data[:] = current_velocity_model
 
-        # 現在のモデル: vp_in を用いて、計算データ波形(calculated_waveform)を計算
         _, calculated_wave_field, _ = self.simulator.forward(vp=self.current_model.vp, save=True, rec=calculated_waveform)
         calculated_waveform.data[:] = calculated_waveform.data
 
-        # 観測データと計算データの残差を計算
         residual.data[:] = calculated_waveform.data - self.true_observed_waveforms[idx]
 
-        # 雑なobjective計算
-        objective = 0.5 * np.sum(np.abs(residual.data**2))
-
-        # ちゃんとしたobjective計算
+        # Proper objective calculation
         # objective = 0.5 * norm(residual) ** 2
+
+        # Rough objective calculation
+        objective = 0.5 * np.sum(np.abs(residual.data**2))
 
         self.grad_operator.apply(rec=residual, grad=grad, u=calculated_wave_field, dt=self.simulator.dt, vp=self.current_model.vp)
 

@@ -20,7 +20,7 @@ from lib.signal_processing.norm import L12_norm
 from lib.signal_processing.proximal_operator import proj_L12_norm_ball, prox_box_constraint
 from lib.visualize import show_velocity_model
 
-# devitoのlogの抑制
+# suppress to dump devito logs
 set_log_level("WARNING")
 
 
@@ -49,10 +49,6 @@ class FWIParams(NamedTuple):
 
 
 class VelocityModelDataForOptimization(NamedTuple):
-    """
-    データだけでなく、最適化に関連するパラメータも保持する(パラメータはデータに依存して変更するのでこのように持たせている, 要素が多くなるならデータとパラメータを分離したいが一旦これで
-    """
-
     true_data: npt.NDArray
     initial_data: npt.NDArray
     box_min_value: float
@@ -237,7 +233,6 @@ def simulate_fwi(
                 break
 
     finally:
-        # ref: https://qiita.com/qualitia_cdev/items/f536002791671c6238e3
         signal.signal(signal.SIGTERM, signal.SIG_IGN)
         signal.signal(signal.SIGINT, signal.SIG_IGN)
 
@@ -256,7 +251,7 @@ def simulate_fwi(
         show_velocity_model(v_core, title=f"Velocity model at final iteration {th + 1}", vmax=vmax, vmin=vmin, cmap="coolwarm")
 
         print(f"elapsed: {time.time() - start_time}")
-        # 子プロセスを解放
+        # release child process
         del grad_calculator
 
         signal.signal(signal.SIGTERM, signal.SIG_DFL)

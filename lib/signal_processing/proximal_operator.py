@@ -21,10 +21,8 @@ def proj_fast_l1_ball(signal, alpha):
 
 
 def proj_L12_norm_ball(signal, alpha):
-    # signalを行方向にL2ノルムをとる
     norm = np.sqrt(np.sum(signal**2, axis=2))
     beta = proj_fast_l1_ball(norm, alpha)
-    # normが0なら0, それ以外ならbeta_i / norm_iをsignalにかける
     return np.where(norm < 1e-8, 0, beta / (norm + 1e-15))[:, :, np.newaxis] * signal
 
 

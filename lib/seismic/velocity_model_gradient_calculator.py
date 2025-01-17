@@ -34,23 +34,8 @@ class VelocityModelGradientCalculator:
         n_shots = source_locations.shape[0]
         for i in range(n_shots):
             self.geometry.src_positions[0, :] = source_locations[i, :]
-
-            # 真のモデル: mode.vp を用いて、観測データ波形(observed_waveform)を計算
-            # self.simulator.forward(vp=self.true_model.vp, rec=observed_waveform)
-            rec, wavefields, summary = self.simulator.forward(vp=self.true_model.vp, save=True, rec=observed_waveform)
-
-            from lib.misc import datasets_root_path
-
-            data_path = datasets_root_path.joinpath("open-fwi/tmp")
-            data = np.load(data_path.joinpath("data1.npy"))
-
+            self.simulator.forward(vp=self.true_model.vp, save=True, rec=observed_waveform)
             true_observed_waveforms.append(observed_waveform.data[:].copy())
-        target = np.array(true_observed_waveforms)
-        print(target.shape)
-        np.save("true_observed_waveforms", target)
-        import sys
-
-        sys.exit(-1)
         return true_observed_waveforms
 
     def calc_grad(self, current_velocity_model: Function, source_locations: NDArray[np.float64]) -> Tuple[float, NDArray[np.float64]]:
@@ -64,15 +49,11 @@ class VelocityModelGradientCalculator:
         n_shots = source_locations.shape[0]
         for i in range(n_shots):
             self.geometry.src_positions[0, :] = source_locations[i, :]
-
-            # 現在のモデル: vp_in を用いて、計算データ波形(calculated_waveform)を計算
             _, calculated_wave_field, _ = self.simulator.forward(vp=current_velocity_model, save=True, rec=calculated_waveform)
 
-            # 観測データと計算データの残差を計算
             residual.data[:] = calculated_waveform.data[:] - observed_waveforms[i]
 
             objective += 0.5 * norm(residual) ** 2
-
             self.grad_operator.apply(rec=residual, grad=grad, u=calculated_wave_field, dt=self.simulator.dt, vp=current_velocity_model)
 
         return objective, -grad.data

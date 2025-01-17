@@ -8,13 +8,12 @@ from lib.misc.colored_text import ColoredText
 PreferValueType = Union[Literal["greater"], Literal["less"], None]
 
 
-# 命名が微妙, List + 解析 を行うが、そもそもこれをクラスとすること自体微妙かも
+# naming is subtle
 class ValueHistoryList[T]:
     values: List[T]
     prefer_value: PreferValueType
     label: str
 
-    # 昇順・降順フラグを引数にとる
     def __init__(self, label: str, prefer_value: PreferValueType, initial_values=None):
         self.label = label
         self.prefer_value = prefer_value

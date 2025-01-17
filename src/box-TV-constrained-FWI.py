@@ -23,6 +23,12 @@ from lib.visualize import show_velocity_model
 # suppress to dump devito logs
 set_log_level("WARNING")
 
+"""
+[NOTE] The number of parallel processes for gradient calculation.
+       If you get an error because of insufficient computational resources, reduce this value.
+"""
+num_parallels = 20
+
 
 class FWIParams(NamedTuple):
     real_cell_size: Vec2D[int]
@@ -91,7 +97,7 @@ def fwi_params_to_fast_parallel_velocity_model_gradient_calculator_props(
         source_locations,
         receiver_locations,
         params.noise_sigma,
-        20,
+        num_parallels,
     )
     return props
 
